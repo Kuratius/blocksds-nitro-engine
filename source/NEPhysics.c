@@ -393,7 +393,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         int64_t modsqrd=(int64_t)spd[0]*spd[0]+(int64_t)spd[1]*spd[1]+(int64_t)spd[2]*spd[2];
         // Check if module is very small -> speed = 0
         int32_t friction=pointer->friction; //this value should be chosen based on time since last update.
-        int64_t diff=modsqrd-(int64_t)friction*friction;
+        int64_t diff=modsqrd+(int64_t)-friction*friction;
         if (diff<=0)
         {
             pointer->xspeed = pointer->yspeed = pointer->zspeed = 0;
@@ -401,10 +401,21 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         else
         {
             int32_t mod=sqrt64(modsqrd);
-            int32_t correction_factor=divf32(mod-friction,mod);
-            pointer->xspeed=mulf32(spd[0],correction_factor);
-            pointer->yspeed=mulf32(spd[1],correction_factor);
-            pointer->zspeed=mulf32(spd[2],correction_factor);
+            uint32_t correction_factor=divf32(mod-friction,mod);
+            int32_t nspd[3];
+            #pragma GCC unroll 3
+            for (int i=0; i<3; i++)
+            {
+                int32_t t=spd[i];
+                if (t<0)
+                    spd[i]=-spd[i];
+                nspd[i]=((uint64_t)(uint32_t)spd[i]*correction_factor)>>12;
+                if (t<0)
+                    nspd[i]=-nspd[i];
+            }
+            pointer->xspeed=nspd[0];
+            pointer->yspeed=nspd[1];
+            pointer->zspeed=nspd[2];
         }
     }
 }
