@@ -394,7 +394,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         // Check if module is very small -> speed = 0
         int32_t friction=pointer->friction; //this value should be chosen based on time since last update.
         int64_t diff=modsqrd+(int64_t)-friction*friction;
-        if (diff<=0)
+        if (__builtin_expect(diff<=0, 0))
         {
             pointer->xspeed = pointer->yspeed = pointer->zspeed = 0;
         }
@@ -407,11 +407,13 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
             for (int i=0; i<3; i++)
             {
                 int32_t t=spd[i];
+                int32_t st=t;
                 if (t<0)
-                    spd[i]=-spd[i];
-                nspd[i]=((uint64_t)(uint32_t)spd[i]*correction_factor)>>12;
+                    st=-st;
+                st=((uint64_t)(uint32_t)st*correction_factor)>>12;
                 if (t<0)
-                    nspd[i]=-nspd[i];
+                    st=-st;
+                nspd[i]=st;
             }
             pointer->xspeed=nspd[0];
             pointer->yspeed=nspd[1];
