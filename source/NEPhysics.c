@@ -401,7 +401,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         else
         {
             int32_t mod=sqrt64(modsqrd);
-            uint32_t correction_factor=divf32(mod-friction,mod);
+            uint32_t correction_factor=div64((int64_t)(mod-friction)<<32 ,mod);
             int32_t nspd[3];
             #pragma GCC unroll 3
             for (int i=0; i<3; i++)
@@ -410,7 +410,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
                 int32_t st=t;
                 if (t<0)
                     st=-st;
-                st=((uint64_t)(uint32_t)st*correction_factor)>>12;
+                st=((uint64_t)(uint32_t)st*correction_factor)>>32;
                 if (t<0)
                     st=-st;
                 nspd[i]=st;
