@@ -223,7 +223,7 @@ void NE_PhysicsUpdateAll(void)
     }
 }
 
-void NE_PhysicsUpdate(NE_Physics *pointer)
+ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
 {
     if (!ne_physics_system_inited)
         return;
@@ -302,7 +302,7 @@ void NE_PhysicsUpdate(NE_Physics *pointer)
             if (pointer->oncollision == NE_ColBounce)
             {
                 // Used to reduce speed:
-                int temp = divf32(inttof32(pointer->keptpercent), inttof32(100));
+                int temp = (pointer->keptpercent<<12)/100;
                 if ((yenabled) && ((abs(bposy - otherposy) >= (pointer->ysize + otherpointer->ysize) >> 1)))
                 {
                     yenabled = false;
@@ -386,35 +386,36 @@ void NE_PhysicsUpdate(NE_Physics *pointer)
             }
         }
     }
-
     // Now, we get the module of speed in order to apply friction.
     if (pointer->friction != 0)
     {
-        pointer->xspeed <<= 10;
-        pointer->yspeed <<= 10;
-        pointer->zspeed <<= 10;
-        int _mod_ = mulf32(pointer->xspeed, pointer->xspeed);
-        _mod_ += mulf32(pointer->yspeed, pointer->yspeed);
-        _mod_ += mulf32(pointer->zspeed, pointer->zspeed);
-        _mod_ = sqrtf32(_mod_);
-
+        int32_t spd[3]={pointer->xspeed, pointer->yspeed, pointer->zspeed};
+        int64_t modsqrd=0;
+        #pragma GCC unroll 3
+        for(int i=0; i<3;i++)
+            modsqrd+=(int64_t)spd[i]*spd[i];
         // Check if module is very small -> speed = 0
-        if (_mod_ < pointer->friction)
+        int32_t friction=-pointer->friction; //this value should be chosen based on time since last update.
+        if (modsqrd < (int64_t)friction*friction)
         {
             pointer->xspeed = pointer->yspeed = pointer->zspeed = 0;
         }
         else
         {
-            int newmod = _mod_ - pointer->friction;
-            // mod   --  newmod    ->  newspeed = speed * newmod / mod
-            // speed --  newspeed
-            int number = divf32(newmod, _mod_);
-            pointer->xspeed = mulf32(pointer->xspeed, number);
-            pointer->yspeed = mulf32(pointer->yspeed, number);
-            pointer->zspeed = mulf32(pointer->zspeed, number);
-            pointer->xspeed >>= 10;
-            pointer->yspeed >>= 10;
-            pointer->zspeed >>= 10;
+            int32_t a[3]={spd[0],spd[1],spd[2]};
+            normalizef32(&a[0]);
+            #pragma GCC unroll 3
+            for(int i=0; i<3; i++)
+            {  
+               int32_t nspd=spd[i]+((a[i]*friction)>>12);
+               if (nspd>>31 == spd[i]>>31) //prevent sign oscillation
+                    spd[i] = nspd;
+               else
+                    spd[i]=0;
+            }
+            pointer->xspeed=spd[0];
+            pointer->yspeed=spd[1];
+            pointer->zspeed=spd[2];
         }
     }
 }

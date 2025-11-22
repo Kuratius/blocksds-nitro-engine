@@ -219,7 +219,7 @@ void NE_PhysicsUpdateAll(void);
 /// Updates the provided physics object.
 ///
 /// @param pointer Pointer to the object.
-void NE_PhysicsUpdate(NE_Physics *pointer);
+ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer);
 
 /// Returns true if the given objects are colliding.
 ///
