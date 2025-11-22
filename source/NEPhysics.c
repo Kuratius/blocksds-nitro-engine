@@ -390,32 +390,21 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
     if (pointer->friction != 0)
     {
         int32_t spd[3]={pointer->xspeed, pointer->yspeed, pointer->zspeed};
-        int64_t modsqrd=0;
-        #pragma GCC unroll 3
-        for(int i=0; i<3;i++)
-            modsqrd+=(int64_t)spd[i]*spd[i];
+        int64_t modsqrd=(int64_t)spd[0]*spd[0]+(int64_t)spd[1]*spd[1]+(int64_t)spd[2]*spd[2];
         // Check if module is very small -> speed = 0
-        int32_t friction=-pointer->friction; //this value should be chosen based on time since last update.
-        if (modsqrd < (int64_t)friction*friction)
+        int32_t friction=pointer->friction; //this value should be chosen based on time since last update.
+        int64_t diff=modsqrd-(int64_t)friction*friction;
+        if (diff<=0)
         {
             pointer->xspeed = pointer->yspeed = pointer->zspeed = 0;
         }
         else
         {
-            int32_t a[3]={spd[0],spd[1],spd[2]};
-            normalizef32(&a[0]);
-            #pragma GCC unroll 3
-            for(int i=0; i<3; i++)
-            {  
-               int32_t nspd=spd[i]+((a[i]*friction)>>12);
-               if (nspd>>31 == spd[i]>>31) //prevent sign oscillation
-                    spd[i] = nspd;
-               else
-                    spd[i]=0;
-            }
-            pointer->xspeed=spd[0];
-            pointer->yspeed=spd[1];
-            pointer->zspeed=spd[2];
+            int32_t mod=sqrt64(modsqrd);
+            int32_t correction_factor=divf32(mod-friction,mod);
+            pointer->xspeed=mulf32(spd[0],correction_factor);
+            pointer->yspeed=mulf32(spd[1],correction_factor);
+            pointer->zspeed=mulf32(spd[2],correction_factor);
         }
     }
 }
