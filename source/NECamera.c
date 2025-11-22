@@ -105,7 +105,7 @@ void NE_CameraSetI(NE_Camera *cam, int xfrom, int yfrom, int zfrom,
     cam->matrix_is_updated = false;
 }
 
-void NE_CameraUse(NE_Camera *cam)
+ARM_CODE void NE_CameraUse(NE_Camera *cam)
 {
     NE_AssertPointer(cam, "NULL pointer");
 

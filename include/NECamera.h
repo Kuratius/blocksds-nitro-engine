@@ -75,7 +75,7 @@ void NE_CameraSetI(NE_Camera *cam, int xfrom, int yfrom, int zfrom,
 /// Set current view to the one of the specified camera.
 ///
 /// @param cam Camera to be used.
-void NE_CameraUse(NE_Camera *cam);
+ARM_CODE void NE_CameraUse(NE_Camera *cam);
 
 /// Moves a camera on the global x, y and z axes.
 ///
