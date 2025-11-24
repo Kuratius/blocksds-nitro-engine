@@ -394,14 +394,14 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         int32_t mod=sqrt64(modsqrd);
         // Check if module is very small -> speed = 0
         int32_t friction=pointer->friction; //this value should be chosen based on time since last update.
-        int64_t diff=mod-friction;
+        int32_t diff=mod-friction;
         if (__builtin_expect(diff<=0, 0))
         {
             pointer->xspeed = pointer->yspeed = pointer->zspeed = 0;
         }
         else
         {
-            uint32_t correction_factor=div64((int64_t)(diff)<<32 ,mod);
+            uint32_t correction_factor=div64((int64_t)diff<<32 ,mod);
             int32_t nspd[3];
             #pragma GCC unroll 3
             for (int i=0; i<3; i++)
