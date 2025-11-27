@@ -401,17 +401,11 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         }
         else
         {
-            REG_DIVCNT = DIV_64_64;
-            REG_DIV_NUMER = (int64_t)friction<<32;
-            REG_DIV_DENOM = modsqrd;
-            //f<m therefore f/m<1, therefore f/m^2<1 , therefore (f<<32)/m^2 <(2^32)
-            //i.e. result fits in 32-bits
             uint32_t mod=sqrt64(modsqrd);
-            while (REG_DIVCNT & DIV_BUSY);
-
-            uint32_t factor=REG_DIV_RESULT_L;
-            uint32_t correction_factor=((uint64_t)mod*factor);
-            correction_factor=-correction_factor;//2's complement abuse
+            div64_asynch((int64_t)(mod-friction)<<32, mod);
+            //f<m therefore f/m<1, therefore f/m^2<1 , therefore (f<<32)/m <(2^32)
+            //i.e. result fits in 32-bit
+            uint32_t correction_factor=div64_result();
             int32_t nspd[3];
             #pragma GCC unroll 3
             for (int i=0; i<3; i++)
