@@ -404,7 +404,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
             REG_DIVCNT = DIV_64_64;
             REG_DIV_NUMER = (int64_t)friction<<32;
             REG_DIV_DENOM = modsqrd;
-            //f<m therefore f/m<1, therefore f/m^2 <<1 , therefore (f<<32)/m^2 <(2^32)
+            //f<m therefore f/m<1, therefore f/m^2<1 , therefore (f<<32)/m^2 <(2^32)
             //i.e. result fits in 32-bits
             uint32_t mod=sqrt64(modsqrd);
             while (REG_DIVCNT & DIV_BUSY);
