@@ -403,7 +403,7 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         {
             uint32_t mod=sqrt64(modsqrd);
             div64_asynch((int64_t)(mod-friction)<<32, mod);
-            //f<m therefore f/m<1, therefore f/m^2<1 , therefore (f<<32)/m <(2^32)
+            //f<m therefore (m-f)/m<1, therefore ((m-f)<<32)/m <(2^32)
             //i.e. result fits in 32-bit
             uint32_t correction_factor=div64_result();
             int32_t nspd[3];
