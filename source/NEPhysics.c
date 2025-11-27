@@ -391,9 +391,9 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
     {
         int32_t spd[3]={pointer->xspeed, pointer->yspeed, pointer->zspeed};
         int64_t modsqrd=(int64_t)spd[0]*spd[0]+(int64_t)spd[1]*spd[1]+(int64_t)spd[2]*spd[2];
-        sqrt64_asynch(modsqrd);
         int32_t friction=pointer->friction; //this value should be chosen based on time since last update.
         int64_t diff=modsqrd+(int64_t)-friction*friction;
+        //computing the above is faster than waiting on hw
         // Check if module is very small -> speed = 0
         if (__builtin_expect(diff<=0, 0))
         {
@@ -401,8 +401,17 @@ ARM_CODE void NE_PhysicsUpdate(NE_Physics *pointer)
         }
         else
         {
-            int32_t mod=sqrt64_result();
-            uint32_t correction_factor=div64((int64_t)(mod-friction)<<32 ,mod);
+            REG_DIVCNT = DIV_64_64;
+            REG_DIV_NUMER = (int64_t)friction<<32;
+            REG_DIV_DENOM = modsqrd;
+            //f<m therefore f/m<1, therefore f/m^2 <<1 , therefore (f<<32)/m^2 <(2^32)
+            //i.e. result fits in 32-bits
+            uint32_t mod=sqrt64(modsqrd);
+            while (REG_DIVCNT & DIV_BUSY);
+
+            uint32_t factor=REG_DIV_RESULT_L;
+            uint32_t correction_factor=((uint64_t)mod*factor);
+            correction_factor=-correction_factor;//2's complement abuse
             int32_t nspd[3];
             #pragma GCC unroll 3
             for (int i=0; i<3; i++)
